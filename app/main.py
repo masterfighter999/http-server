@@ -74,7 +74,7 @@ def main():
                         break
 
                 # Receive the request body
-                body = client.recv(content_length).decode()
+                body = client.recv(content_length)
                 
                 try:
                     # Open the file in write mode
