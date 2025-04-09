@@ -1,43 +1,21 @@
-import socket  # Importing the socket module to handle network communication
-
+import socket
 def main():
-    # Create a socket using IPv4 (AF_INET) and TCP (SOCK_STREAM)
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        # Bind the socket to localhost on port 4221
-        s.bind(("localhost", 4221))
-        # Start listening for incoming connections
-        s.listen()
-        # Accept a connection from a client
-        conn, addr = s.accept()
-        
-        # Infinite loop to handle client requests
-        while True:
-            # Receive data from the client (up to 1024 bytes)
-            data = conn.recv(1024)
-            # Decode the received data and split it into request and headers
-            request, headers = data.decode().split("\r\n", 1)
-            # Extract the HTTP method and target (path) from the request line
-            method, target = request.split(" ")[:2]
-            
-            # If no data is received, break the loop
-            if not data:
-                break
-            
-            # Handle requests based on the target path
-            if target == "/":
-                # Respond with a 200 OK status for the root path
-                response = b"HTTP/1.1 200 OK\r\n\r\n"
-            elif target.startswith("/echo/"):
-                # Extract the value after "/echo/" and respond with it
-                value = target.split("/echo/")[1]
-                response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(value)}\r\n\r\n{value}".encode()
-            else:
-                # Respond with a 404 Not Found status for unknown paths
-                response = b"HTTP/1.1 404 Not Found\r\n\r\n"
-            
-            # Send the response back to the client
-            conn.sendall(response)
-
+    # Uncomment this to pass the first stage
+    #
+    server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
+    client, addr = server_socket.accept()
+    data = client.recv(1024).decode()
+    req = data.split("\r\n")
+    path = req[0].split(" ")[1]
+    if path == "/":
+        response = "HTTP/1.1 200 OK\r\n\r\n".encode()
+    elif path.startswith("/echo"):
+        response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
+    elif path.startswith("/user-agent"):
+        user_agent = req[2].split(": ")[1]
+        response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(user_agent)}\r\n\r\n{user_agent}".encode()
+    else:
+        response = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
+    client.send(response)
 if __name__ == "__main__":
-    # Entry point of the program
     main()
