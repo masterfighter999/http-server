@@ -1,49 +1,79 @@
 # Uncomment this to pass the first stage
-import socket
-import threading
-import sys
+import socket  # For creating server sockets
+import threading  # For handling multiple client connections concurrently
+import sys  # For accessing command-line arguments
 
 def main():
+    # Function to handle individual client requests
     def handle_req(client, addr):
-        data = client.recv(1024).decode()
-        req = data.split('\r\n')
-        path = req[0].split(" ")[1]
-        if req[0].split(" ")[0] == "GET":
-            if path == "/":
-                response = "HTTP/1.1 200 OK\r\n\r\n".encode()  
-            elif path.startswith('/echo'):
-                response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
-            elif path.startswith("/user-agent"):
-                user_agent = req[2].split(": ")[1]
-                response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(user_agent)}\r\n\r\n{user_agent}".encode()
-            elif path.startswith("/files"):
-                directory = sys.argv[2]
-                filename = path[7:]
-                print(directory, filename)
-                try:
-                    with open(f"/{directory}/{filename}", "r") as f:
-                        body = f.read()
-                    response = f"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {len(body)}\r\n\r\n{body}".encode()
-                except Exception as e:
-                    response = f"HTTP/1.1 404 Not Found\r\n\r\n".encode()
-            else:
-                response = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
-            client.send(response)
+        try:
+            # Receive data from the client (up to 1024 bytes)
+            data = client.recv(1024).decode()
+            # Split the received data into lines
+            req = data.split('\r\n')
+            # Extract the requested path from the first line of the request
+            path = req[0].split(" ")[1]
 
-        elif req[0].split(" ")[0] == "POST":
-            if path.startswith("/files"):
-                directory = sys.argv[2]
-                filename = path[7:]
-                body = req[-1]
-                with open(f"/{directory}/{filename}", "w") as f:
-                    f.write(body)
-                response = "HTTP/1.1 201 Created\r\n\r\n".encode()
-            client.send(response)
+            # Handle GET requests
+            if req[0].split(" ")[0] == "GET":
+                if path == "/":
+                    # Respond with a 200 OK for the root path
+                    response = "HTTP/1.1 200 OK\r\n\r\n".encode()
+                elif path.startswith('/echo'):
+                    # Respond with the echoed text after "/echo"
+                    response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
+                elif path.startswith("/user-agent"):
+                    # Extract and respond with the User-Agent header
+                    user_agent = req[2].split(": ")[1]
+                    response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(user_agent)}\r\n\r\n{user_agent}".encode()
+                elif path.startswith("/files"):
+                    # Handle file retrieval requests
+                    directory = sys.argv[2]  # Directory specified via command-line argument
+                    filename = path[7:]  # Extract the filename from the path
+                    print(directory, filename)  # Log the directory and filename
+                    try:
+                        # Open the requested file in read mode
+                        with open(f"/{directory}/{filename}", "r") as f:
+                            body = f.read()
+                        # Respond with the file contents
+                        response = f"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {len(body)}\r\n\r\n{body}".encode()
+                    except Exception as e:
+                        # Respond with 404 Not Found if the file doesn't exist
+                        response = f"HTTP/1.1 404 Not Found\r\n\r\n".encode()
+                else:
+                    # Respond with 404 Not Found for unknown paths
+                    response = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
+                client.send(response)
+
+            # Handle POST requests
+            elif req[0].split(" ")[0] == "POST":
+                if path.startswith("/files"):
+                    # Handle file creation requests
+                    directory = sys.argv[2]  # Directory specified via command-line argument
+                    filename = path[7:]  # Extract the filename from the path
+                    body = req[-1]  # Extract the request body
+                    # Write the request body to the specified file
+                    with open(f"/{directory}/{filename}", "w") as f:
+                        f.write(body)
+                    # Respond with 201 Created
+                    response = "HTTP/1.1 201 Created\r\n\r\n".encode()
+                client.send(response)
+        except Exception as e:
+            print(f"Error handling request from {addr}: {e}")
+        finally:
+            # Close the client connection
+            client.close()
+
+    # Create a server socket bound to localhost on port 4221
     server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
-    while True:    
-        client, addr = server_socket.accept()
+    print("Server is listening on port 4221...")
+
+    # Continuously accept and handle client connections
+    while True:
+        client, addr = server_socket.accept()  # Accept a new client connection
+        print(f"Connection from {addr}")
+        # Handle the client in a new thread
         threading.Thread(target=handle_req, args=(client, addr)).start()
-    
 
 if __name__ == "__main__":
     main()
