@@ -37,7 +37,7 @@ def main():
                 body = req[-1]
                 with open(f"/{directory}/{filename}", "w") as f:
                     f.write(body)
-                response = "HTTP/1.1 201 OK\r\n\r\n".encode()
+                response = "HTTP/1.1 201 Created\r\n\r\n".encode()
             client.send(response)
     server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
     while True:    
