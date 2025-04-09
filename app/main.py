@@ -74,11 +74,11 @@ def main():
                         break
 
                 # Receive the request body
-                body = client.recv(content_length)
+                body = client.recv(content_length)  # receive as bytes
                 
                 try:
                     # Open the file in write mode
-                    with open(file_path, "wb") as f:
+                    with open(file_path, "wb") as f:  # Open in binary write mode
                         f.write(body)
                     # Respond with 201 Created
                     response = "HTTP/1.1 201 Created\r\n\r\n".encode()
@@ -115,4 +115,3 @@ def main():
 # Entry point for the script
 if __name__ == "__main__":
     main()
-
