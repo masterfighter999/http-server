@@ -78,7 +78,7 @@ def main():
                 
                 try:
                     # Open the file in write mode
-                    with open(file_path, "w") as f:
+                    with open(file_path, "wb") as f:
                         f.write(body)
                     # Respond with 201 Created
                     response = "HTTP/1.1 201 Created\r\n\r\n".encode()
