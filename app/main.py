@@ -1,7 +1,7 @@
-import socket
-import threading
-import os
-import sys
+import socket  # Import the socket module for network communication
+import threading  # Import the threading module to handle multiple clients concurrently
+import os  # Import the os module for file path operations
+import sys  # Import the sys module to access command-line arguments
 
 def main():
     """
@@ -16,16 +16,17 @@ def main():
             addr: The client's address.
         """
         try:
-            # Receive data from the client
+            # Receive data from the client (up to 1024 bytes) and decode it to a string
             data = client.recv(1024).decode()
-            # Split the request into lines
+            # Split the received data into lines based on CRLF
             req = data.split("\r\n")
-            # Parse the request line (method, path, HTTP version)
-            method, path, http_version = req[0].split(" ")
+            # Parse the request line to extract the HTTP method and path
+            method, path, _ = req[0].split(" ")
 
+            # Handle GET requests
             if method == "GET":
                 if path == "/":
-                    # Respond with 200 OK for root path
+                    # Respond with 200 OK for the root path
                     response = "HTTP/1.1 200 OK\r\n\r\n".encode()
                 elif path.startswith("/echo"):
                     # Respond with 200 OK and echo the path for /echo endpoint
@@ -60,10 +61,10 @@ def main():
                     # Respond with 404 Not Found for unknown paths
                     response = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
 
+            # Handle POST requests to create files
             elif method == "POST" and path.startswith("/files/"):
-                # Handle POST requests to create files
                 directory = sys.argv[2]  # Get the directory from command-line arguments
-                filename = path[len("/files/"):] # file name from the path
+                filename = path[len("/files/"):]  # Extract the filename from the path
                 file_path = os.path.join(directory, filename)
 
                 # Find the Content-Length header
@@ -74,13 +75,13 @@ def main():
                         break
 
                 # Receive the request body
-                body = client.recv(content_length)  # receive as bytes
+                body = client.recv(content_length)  # Receive as bytes
                 
                 try:
-                    # Open the file in write mode
-                    with open(file_path, "wb") as f:  # Open in binary write mode
+                    # Open the file in binary write mode and write the received body to it
+                    with open(file_path, "wb") as f:
                         f.write(body)
-                    # Respond with 201 Created
+                    # Respond with 201 Created indicating the file was successfully created
                     response = "HTTP/1.1 201 Created\r\n\r\n".encode()
                 except Exception as e:
                     # Respond with 500 Internal Server Error if file creation fails
