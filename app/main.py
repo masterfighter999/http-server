@@ -16,12 +16,20 @@ def main():
             addr: The client's address.
         """
         try:
-            # Receive data from the client (up to 1024 bytes) and decode it to a string
-            data = client.recv(1024).decode()
-            # Split the received data into lines based on CRLF
+            data = client.recv(1024).decode('utf-8', errors='replace')
+            if not data:
+                client.send(b"HTTP/1.1 400 Bad Request\r\n\r\n")
+                return
             req = data.split("\r\n")
-            # Parse the request line to extract the HTTP method and path
-            method, path, _ = req[0].split(" ")
+            if len(req) < 1 or not req[0]:
+                client.send(b"HTTP/1.1 400 Bad Request\r\n\r\n")
+                return
+            try:
+                method, path, _ = req[0].split(" ")
+            except ValueError:
+                client.send(b"HTTP/1.1 400 Bad Request\r\n\r\n")
+                return
+
 
             # Handle GET requests
             if method == "GET":
