@@ -20,8 +20,19 @@ def main():
                     # Respond with a 200 OK for the root path
                     response = "HTTP/1.1 200 OK\r\n\r\n".encode()
                 elif path.startswith('/echo'):
-                    # Respond with the echoed text after "/echo"
-                    response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
+                    # Check if the request contains the "Accept-Encoding" header
+                    if req[2].startswith("Accept-Encoding"):
+                        # Extract the encoding type from the header
+                        encoding = req[2].split(": ")[1]
+                        if encoding != "gzip":
+                            # Respond with plain text if the encoding is not gzip
+                            response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
+                        else:
+                            # Respond with gzip encoding if specified
+                            response = f"HTTP/1.1 200 OK\r\nContent-Encoding: {encoding}\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
+                    else:
+                        # Respond with plain text if the "Accept-Encoding" header is missing
+                        response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
                 elif path.startswith("/user-agent"):
                     # Extract and respond with the User-Agent header
                     user_agent = req[2].split(": ")[1]
