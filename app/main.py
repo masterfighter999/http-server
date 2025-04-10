@@ -21,9 +21,9 @@ def main():
                     response = "HTTP/1.1 200 OK\r\n\r\n".encode()
                 elif path.startswith('/echo'):
                     # Check if the "Accept-Encoding" header is present in the request
-                    if req[4].startswith("Accept-Encoding"):
+                    if req[2].startswith("Accept-Encoding"):
                         # Extract the encoding type from the "Accept-Encoding" header
-                        encoding = req[2].split(": ")[1]
+                        encoding = req[4].split(": ")[1]
                         print(encoding)  # Log the encoding type for debugging purposes
                         if encoding == 'gzip':
                             # Respond with gzip-encoded content if the encoding is "gzip"
