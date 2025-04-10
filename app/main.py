@@ -14,7 +14,7 @@ def main():
             if path == "/":
                 response = "HTTP/1.1 200 OK\r\n\r\n".encode()  
             elif path.startswith('/echo'):
-                if req[4].startswith("Accept-Encoding"):
+                if req[2].startswith("Accept-Encoding"):
                     encoding = req[2].split(": ")[1]
                     print(encoding)
                     if encoding == 'gzip':
