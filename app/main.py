@@ -20,16 +20,26 @@ def main():
                     # Respond with a 200 OK for the root path
                     response = "HTTP/1.1 200 OK\r\n\r\n".encode()
                 elif path.startswith('/echo'):
-                    # Check if the request contains the "Accept-Encoding" header
+                    # Check if the "Accept-Encoding" header is present in the request
                     if req[2].startswith("Accept-Encoding"):
-                        # Extract the encoding type from the header
+                        # Extract the encoding type from the "Accept-Encoding" header
                         encoding = req[2].split(": ")[1]
-                        if encoding != "gzip":
-                            # Respond with plain text if the encoding is not gzip
-                            response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
+                        print(encoding)  # Log the encoding type for debugging purposes
+                        if encoding == 'gzip':
+                            # Respond with gzip-encoded content if the encoding is "gzip"
+                            response = f"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
+                        elif ',' in encoding:
+                            # Handle cases where multiple encodings are specified (e.g., "gzip, deflate")
+                            encoding = [i.strip() for i in encoding.split(",")]  # Split and clean the encodings
+                            if 'gzip' in encoding:
+                                # Respond with gzip-encoded content if "gzip" is one of the encodings
+                                response = f"HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
+                            else:
+                                # Respond with plain text if "gzip" is not in the list of encodings
+                                response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
                         else:
-                            # Respond with gzip encoding if specified
-                            response = f"HTTP/1.1 200 OK\r\nContent-Encoding: {encoding}\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
+                            # Respond with plain text if the encoding is not "gzip"
+                            response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
                     else:
                         # Respond with plain text if the "Accept-Encoding" header is missing
                         response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(path[6:])}\r\n\r\n{path[6:]}".encode()
